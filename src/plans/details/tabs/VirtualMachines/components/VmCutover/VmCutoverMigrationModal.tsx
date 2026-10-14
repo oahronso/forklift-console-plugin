@@ -11,7 +11,7 @@ import { Stack, StackItem } from '@patternfly/react-core';
 import { useForkliftAnalytics } from '@utils/analytics/hooks/useForkliftAnalytics';
 import { ForkliftTrans } from '@utils/i18n';
 
-type VmModalProps = {
+export type VmModalProps = {
   migration: V1beta1Migration;
   vmId: string;
   vmName: string;

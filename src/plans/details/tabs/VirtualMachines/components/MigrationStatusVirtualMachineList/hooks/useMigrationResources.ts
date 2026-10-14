@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useLatestPlanMigration } from 'src/plans/hooks/useLatestPlanMigration';
+import { usePlanMigration } from 'src/plans/hooks/usePlanMigration';
 
 import type {
   IoK8sApiBatchV1Job,
@@ -103,6 +104,7 @@ export const useMigrationResources = (plan: V1beta1Plan): MigrationResources => 
   );
 
   const vmDict = getPlanVirtualMachinesDict(plan);
+  const [activeMigration] = usePlanMigration(plan);
 
   const migrationListData = useMemo(() => {
     return virtualMachines.map((specVM) => {
@@ -111,15 +113,18 @@ export const useMigrationResources = (plan: V1beta1Plan): MigrationResources => 
         dvs: dvsDict[id],
         isWarm: getPlanIsWarm(plan),
         jobs: jobsDict[id],
+        migration: activeMigration,
         plan,
         pods: podsDict[id],
         pvcs: pvcsDict[id],
         specVM,
         statusVM: vmDict[id],
         targetNamespace: getPlanTargetNamespace(plan),
+        vmId: id,
+        vmName: vmDict[id]?.newName ?? vmDict[id]?.name ?? specVM.name ?? '',
       };
     }) as MigrationStatusVirtualMachinePageData[];
-  }, [virtualMachines, dvsDict, jobsDict, podsDict, pvcsDict, vmDict, plan]);
+  }, [activeMigration, virtualMachines, dvsDict, jobsDict, podsDict, pvcsDict, vmDict, plan]);
 
   return {
     error: migrationError ?? podsError ?? jobsError ?? pvcsError ?? dvsError,

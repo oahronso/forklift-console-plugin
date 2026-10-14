@@ -7,6 +7,8 @@ import { VirtualMachineModelGroupVersionKind } from '@utils/crds/common/models';
 
 import DisksCounter from '../components/DisksCounter';
 import DisksTransfer from '../components/DisksTransfer';
+import VMCutoverActions from '../components/VMCutoverActions';
+import { VMCutoverCellRenderer } from '../components/VMCutoverCellRenderer';
 
 import {
   type MigrationStatusVirtualMachinePageData,
@@ -21,11 +23,17 @@ import {
 export const getMigrationStatusVirtualMachinesRowFields = (
   fieldsData: MigrationStatusVirtualMachinePageData,
 ): Record<MigrationStatusVirtualMachinesTableResourceId, ReactNode> => {
-  const { specVM, statusVM, targetNamespace } = fieldsData;
+  const { migration, specVM, statusVM, targetNamespace, vmId, vmName } = fieldsData;
   const vmCreated = isVirtualMachineCreationCompleted(statusVM);
   const diskTransferPipeline = getVMDiskTransferPipeline(statusVM);
-
   return {
+    [MigrationStatusVirtualMachinesTableResourceId.Actions]:
+      migration && statusVM ? (
+        <VMCutoverActions migration={migration} statusVM={statusVM} vmId={vmId} vmName={vmName} />
+      ) : null,
+    [MigrationStatusVirtualMachinesTableResourceId.Cutover]: migration ? (
+      <VMCutoverCellRenderer migration={migration} vmId={vmId} />
+    ) : null,
     [MigrationStatusVirtualMachinesTableResourceId.DiskCounter]: (
       <DisksCounter diskTransferPipeline={diskTransferPipeline} />
     ),
