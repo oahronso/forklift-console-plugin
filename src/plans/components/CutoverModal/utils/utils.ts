@@ -1,5 +1,5 @@
 import { MigrationModel, type V1beta1Migration } from '@forklift-ui/types';
-import { k8sPatch } from '@openshift-console/dynamic-plugin-sdk';
+import { k8sPatch, type Patch } from '@openshift-console/dynamic-plugin-sdk';
 import { TELEMETRY_EVENTS } from '@utils/analytics/constants';
 import { isEmpty } from '@utils/helpers';
 
@@ -66,22 +66,57 @@ export const patchMigrationVmCutover = async (
   cutover?: string,
   trackEvent?: (event: string, data: Record<string, unknown>) => void,
 ): Promise<V1beta1Migration> => {
-  const existing = migration?.spec?.vmCutover;
-  const remaining = (existing ?? []).filter((entry) => entry.id !== vmId);
-  // If the caller provided a cutover for the VM - add the cutover to the future array.
-  // Otherwise - remove the VM element from it.
-  const next = cutover ? [...remaining, { cutover, id: vmId }] : remaining;
+  const vmCutoverArray = migration?.spec?.vmCutover;
+  const vmIndex = vmCutoverArray?.findIndex((entry) => entry.id === vmId) ?? -1;
 
-  // Guard: can't remove a cutover from a non-existing CutOver array
-  if (!cutover && !existing) {
+  const patchByCase = (): Patch | undefined => {
+    if (!cutover) {
+      // If no desired cutover was supplied - treat as remove cutover function
+      if (vmIndex === -1) return undefined; // Guard against non-existent entry deletion
+      return {
+        op: 'remove',
+        path: `/spec/vmCutover/${vmIndex}`,
+      };
+    }
+
+    if (isEmpty(vmCutoverArray)) {
+      // Array is empty, meaning this is the first per-VM cutover on this migration
+      return {
+        op: 'add',
+        path: '/spec/vmCutover',
+        value: [{ cutover, id: vmId }],
+      };
+    }
+
+    if (vmIndex >= 0) {
+      // Case where the array contains an entry for the VM
+      return {
+        op: 'replace',
+        path: `/spec/vmCutover/${vmIndex}/cutover`,
+        value: cutover,
+      };
+    }
+
+    // Final case: array exists, but this VM in not in it yet
+    return {
+      op: 'add',
+      path: '/spec/vmCutover/-',
+      value: { cutover, id: vmId },
+    };
+  };
+
+  const patch = patchByCase();
+
+  if (!patch) {
+    // Guard against deletion of non-existent entry
     return migration;
   }
 
-  const data = isEmpty(next)
-    ? [{ op: 'remove', path: '/spec/vmCutover' }]
-    : [{ op: existing ? 'replace' : 'add', path: '/spec/vmCutover', value: next }];
-
-  const result = await k8sPatch({ data, model: MigrationModel, resource: migration });
+  const result = await k8sPatch({
+    data: [patch],
+    model: MigrationModel,
+    resource: migration,
+  });
 
   trackEvent?.(TELEMETRY_EVENTS.MIGRATION_VM_CUTOVER_SCHEDULED, {
     cutoverTime: cutover,
