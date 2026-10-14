@@ -3,8 +3,6 @@ import { renderHook } from '@testing-library/react';
 
 import { useMigrationResources } from '../useMigrationResources';
 
-import { usePlanMigration } from './../../../../../../../hooks/usePlanMigration';
-
 const mockUseK8sWatchResource = jest.fn();
 const mockUseLatestPlanMigration = jest.fn();
 const mockUsePlanMigration = jest.fn();
