@@ -5,6 +5,7 @@ import { useMigrationResources } from '../useMigrationResources';
 
 const mockUseK8sWatchResource = jest.fn();
 const mockUseLatestPlanMigration = jest.fn();
+const mockUsePlanMigration = jest.fn();
 
 jest.mock('@utils/hooks/useK8sWatchResource', (): unknown => ({
   useK8sWatchResource: (...args: unknown[]) => mockUseK8sWatchResource(...args),
@@ -12,6 +13,10 @@ jest.mock('@utils/hooks/useK8sWatchResource', (): unknown => ({
 
 jest.mock('src/plans/hooks/useLatestPlanMigration', (): unknown => ({
   useLatestPlanMigration: (...args: unknown[]) => mockUseLatestPlanMigration(...args),
+}));
+
+jest.mock('src/plans/hooks/usePlanMigration', (): unknown => ({
+  usePlanMigration: (...args: unknown[]) => mockUsePlanMigration(...args),
 }));
 
 const PLAN_UID = 'plan-uid';
@@ -46,6 +51,8 @@ const labeled = (
 describe('useMigrationResources - listData', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUsePlanMigration.mockReturnValue([undefined, true, undefined]);
+
     mockUseLatestPlanMigration.mockReturnValue([
       { metadata: { uid: MIGRATION_UID } },
       true,
