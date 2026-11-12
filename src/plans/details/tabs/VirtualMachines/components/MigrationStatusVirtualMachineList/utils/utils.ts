@@ -99,7 +99,7 @@ export const isVirtualMachineCreationCompleted = (
 const isDiskTransferStep = (pipe: V1beta1PlanStatusMigrationVmsPipeline): boolean =>
   pipe?.name?.startsWith(DISK_TRANSFER_PREFIX) || pipe?.name === DISK_ALLOCATION_NAME;
 
-const isStepActive = (pipe: V1beta1PlanStatusMigrationVmsPipeline): boolean =>
+export const isStepActive = (pipe: V1beta1PlanStatusMigrationVmsPipeline): boolean =>
   Boolean(pipe.phase) &&
   pipe.phase !== taskStatuses.pending &&
   pipe.phase !== taskStatuses.completed;

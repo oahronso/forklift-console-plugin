@@ -11,18 +11,14 @@ import {
   getMigrationVMsStatusCounts,
 } from 'src/plans/details/components/PlanStatus/utils/migrationVmStatus';
 import { canPlanResumeConversion } from 'src/plans/details/components/PlanStatus/utils/planStatusPermissions';
-import {
-  getPlanStatus,
-  isPlanArchived,
-  isPlanExecuting,
-} from 'src/plans/details/components/PlanStatus/utils/planStatusResolver';
+import { getPlanStatus } from 'src/plans/details/components/PlanStatus/utils/planStatusResolver';
 import { PlanStatuses } from 'src/plans/details/components/PlanStatus/utils/types';
 import VMStatusIconsRow from 'src/plans/details/components/PlanStatus/VMStatusIconsRow';
 import { usePlanMigration } from 'src/plans/hooks/usePlanMigration';
 import { useForkliftTranslation } from 'src/utils/i18n';
 
 import { useOverlay } from '@openshift-console/dynamic-plugin-sdk';
-import { Button, ButtonVariant, Flex, FlexItem, Spinner, Split } from '@patternfly/react-core';
+import { Button, ButtonVariant, Flex, FlexItem, Split } from '@patternfly/react-core';
 import { PlayIcon as StartIcon, RedoIcon } from '@patternfly/react-icons';
 import {
   getPlanVirtualMachines,
@@ -32,7 +28,6 @@ import { isEmpty } from '@utils/helpers';
 
 import type { PlanFieldProps } from '../utils/types';
 
-import usePipelineTaskProgress from './hooks/usePipelineTaskProgress';
 import PlanStatusPopover from './PlanStatusPopover';
 
 import './PlanStatus.style.scss';
@@ -40,7 +35,6 @@ import './PlanStatus.style.scss';
 const PlanStatus: FC<PlanFieldProps> = ({ plan }) => {
   const { t } = useForkliftTranslation();
   const launchOverlay = useOverlay();
-  const pipelinesProgressPercentage = usePipelineTaskProgress(plan);
   const planStatus = getPlanStatus(plan);
   const [activeMigration, loaded] = usePlanMigration(plan);
 
@@ -68,8 +62,6 @@ const PlanStatus: FC<PlanFieldProps> = ({ plan }) => {
     );
   }
 
-  const isPlanRunning = isPlanExecuting(plan) && !isPlanArchived(plan);
-
   const vmStatuses =
     PlanStatuses.CannotStart === planStatus
       ? getCantStartVMStatusCount(getPlanVirtualMachines(plan))
@@ -88,18 +80,7 @@ const PlanStatus: FC<PlanFieldProps> = ({ plan }) => {
     >
       <FlexItem className="plan-status-cell-label-section">
         <PlanStatusPopover plan={plan}>
-          {isPlanRunning &&
-          PlanStatuses.Paused !== planStatus &&
-          PlanStatuses.Pending !== planStatus ? (
-            <Split hasGutter>
-              <Spinner data-testid="plan-progress-spinner" size="md" />
-              <span className="pf-v6-u-font-size-sm" data-testid="plan-progress-percentage">
-                {Math.trunc(pipelinesProgressPercentage)}%
-              </span>
-            </Split>
-          ) : (
-            <PlanStatusLabel plan={plan} />
-          )}
+          <PlanStatusLabel plan={plan} />
         </PlanStatusPopover>
       </FlexItem>
       {canPlanResumeConversion(plan) && loaded && !hasActiveMigration && (
@@ -118,7 +99,11 @@ const PlanStatus: FC<PlanFieldProps> = ({ plan }) => {
         </FlexItem>
       )}
       <FlexItem>
-        <VMStatusIconsRow plan={plan} statuses={vmStatuses} />
+        <VMStatusIconsRow
+          migrationVMs={activeMigration?.status?.vms}
+          plan={plan}
+          statuses={vmStatuses}
+        />
       </FlexItem>
     </Flex>
   );

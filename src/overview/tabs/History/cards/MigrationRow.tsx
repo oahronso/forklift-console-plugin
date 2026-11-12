@@ -123,7 +123,9 @@ const MigrationRow: FC<MigrationRowProps> = ({
         ) : (
           statusLabel
         )}
-        {plan ? <VMStatusIconsRow plan={plan} statuses={vmStatuses} /> : null}
+        {plan ? (
+          <VMStatusIconsRow migrationVMs={migrationVMs} plan={plan} statuses={vmStatuses} />
+        ) : null}
       </Split>
     ),
   };

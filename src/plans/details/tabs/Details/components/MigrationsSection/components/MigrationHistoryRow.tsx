@@ -84,7 +84,7 @@ const MigrationHistoryRow: FC<MigrationHistoryRowProps> = ({
         <Td>
           <Split hasGutter>
             {statusLabel}
-            <VMStatusIconsRow plan={plan} statuses={vmStatuses} />
+            <VMStatusIconsRow migrationVMs={migrationVMs} plan={plan} statuses={vmStatuses} />
           </Split>
         </Td>
         <Td>
